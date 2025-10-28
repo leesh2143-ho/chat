@@ -3,7 +3,10 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
-const io = new Server(server);
+const io = new Server(server, {
+  pingInterval: 10000,
+  pingTimeout: 5000,
+});
 
 const chatHistory = {}; // { [roomId]: [message array] }
 const MAX_HISTORY_LENGTH = 50;
@@ -19,8 +22,10 @@ function addMessageToHistory(roomId, message) {
   }
 }
 
+app.use(express.static('public'));
+
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(__dirname + '/public/index.html');
 });
 
 io.on('connection', (socket) => {
@@ -28,6 +33,7 @@ io.on('connection', (socket) => {
   const randomNickname = 'user-' + Math.floor(1000 + Math.random() * 9000);
   socket.data.nickname = randomNickname;
   console.log(socket.data.nickname + ' connected');
+  socket.emit('nicknameAssigned', randomNickname);
 
   // Room 입장 이벤트 핸들러
   socket.on('joinRoom', (roomId) => {
