@@ -29,11 +29,17 @@ io.on('connection', (socket) => {
     console.log(`${socket.data.nickname} joined room: ${roomId}`);
   });
 
-  // 메시지 이벤트 핸들러
-  socket.on('message', (msg) => {
-    // This simple echo handler will be updated later to handle rooms.
-    const echoMessage = `${socket.data.nickname}: ${msg}`;
-    socket.emit('message', echoMessage);
+  // 채팅 메시지 이벤트 핸들러
+  socket.on('chatMessage', ({ roomId, text }) => {
+    const chatMessage = {
+      type: 'chat',
+      roomId: roomId,
+      sender: socket.data.nickname,
+      text: text,
+      ts: new Date().toISOString(),
+    };
+    io.to(roomId).emit('chatMessage', chatMessage);
+    console.log(`Message from ${socket.data.nickname} in room ${roomId}: ${text}`);
   });
 
   socket.on('disconnect', () => {
