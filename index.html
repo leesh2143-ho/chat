@@ -52,20 +52,25 @@
         }
       });
 
-      socket.on('chatMessage', function(msg) {
+      function addMessageToList(msg) {
         const item = document.createElement('li');
-        item.textContent = `[${new Date(msg.ts).toLocaleTimeString()}] ${msg.sender}: ${msg.text}`;
+        if (msg.type === 'system') {
+          item.style.fontStyle = 'italic';
+          item.style.color = 'grey';
+          item.textContent = `[${new Date(msg.ts).toLocaleTimeString()}] ${msg.text}`;
+        } else { // 'chat'
+          item.textContent = `[${new Date(msg.ts).toLocaleTimeString()}] ${msg.sender}: ${msg.text}`;
+        }
         messages.appendChild(item);
         window.scrollTo(0, document.body.scrollHeight);
-      });
+      }
 
-      socket.on('systemMessage', function(msg) {
-        const item = document.createElement('li');
-        item.style.fontStyle = 'italic';
-        item.style.color = 'grey';
-        item.textContent = `[${new Date(msg.ts).toLocaleTimeString()}] ${msg.text}`;
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
+      socket.on('chatMessage', addMessageToList);
+      socket.on('systemMessage', addMessageToList);
+
+      socket.on('history', function(history) {
+        messages.innerHTML = ''; // Clear the list before rendering history
+        history.forEach(addMessageToList);
       });
     </script>
   </body>

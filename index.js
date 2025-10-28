@@ -5,6 +5,20 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 
+const chatHistory = {}; // { [roomId]: [message array] }
+const MAX_HISTORY_LENGTH = 50;
+
+// Helper function to add a message to a room's history
+function addMessageToHistory(roomId, message) {
+  if (!chatHistory[roomId]) {
+    chatHistory[roomId] = [];
+  }
+  chatHistory[roomId].push(message);
+  if (chatHistory[roomId].length > MAX_HISTORY_LENGTH) {
+    chatHistory[roomId].shift(); // Remove the oldest message
+  }
+}
+
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
@@ -18,6 +32,12 @@ io.on('connection', (socket) => {
   // Room 입장 이벤트 핸들러
   socket.on('joinRoom', (roomId) => {
     socket.join(roomId);
+
+    // Send history to the client who just joined
+    if (chatHistory[roomId]) {
+      socket.emit('history', chatHistory[roomId]);
+    }
+
     const systemMessage = {
       type: 'system',
       roomId: roomId,
@@ -25,6 +45,7 @@ io.on('connection', (socket) => {
       text: `${socket.data.nickname} entered this room`,
       ts: new Date().toISOString(),
     };
+    addMessageToHistory(roomId, systemMessage);
     io.to(roomId).emit('systemMessage', systemMessage);
     console.log(`${socket.data.nickname} joined room: ${roomId}`);
   });
@@ -38,6 +59,7 @@ io.on('connection', (socket) => {
       text: text,
       ts: new Date().toISOString(),
     };
+    addMessageToHistory(roomId, chatMessage);
     io.to(roomId).emit('chatMessage', chatMessage);
     console.log(`Message from ${socket.data.nickname} in room ${roomId}: ${text}`);
   });
@@ -55,6 +77,7 @@ io.on('connection', (socket) => {
           text: `${socket.data.nickname} left the room`,
           ts: new Date().toISOString(),
         };
+        addMessageToHistory(roomId, systemMessage);
         io.to(roomId).emit('systemMessage', systemMessage);
         console.log(`Sent leave message to room: ${roomId}`);
       }
