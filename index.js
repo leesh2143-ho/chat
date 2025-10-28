@@ -15,14 +15,44 @@ io.on('connection', (socket) => {
   socket.data.nickname = randomNickname;
   console.log(socket.data.nickname + ' connected');
 
+  // Room 입장 이벤트 핸들러
+  socket.on('joinRoom', (roomId) => {
+    socket.join(roomId);
+    const systemMessage = {
+      type: 'system',
+      roomId: roomId,
+      sender: 'Server',
+      text: `${socket.data.nickname} entered this room`,
+      ts: new Date().toISOString(),
+    };
+    io.to(roomId).emit('systemMessage', systemMessage);
+    console.log(`${socket.data.nickname} joined room: ${roomId}`);
+  });
+
   // 메시지 이벤트 핸들러
   socket.on('message', (msg) => {
+    // This simple echo handler will be updated later to handle rooms.
     const echoMessage = `${socket.data.nickname}: ${msg}`;
     socket.emit('message', echoMessage);
   });
 
   socket.on('disconnect', () => {
     console.log(socket.data.nickname + ' disconnected');
+    // 소켓이 속한 모든 Room에 퇴장 메시지를 보냅니다.
+    // socket.rooms에는 소켓 ID 자체도 포함되어 있으므로, 이를 제외하고 순회합니다.
+    for (const roomId of socket.rooms) {
+      if (roomId !== socket.id) {
+        const systemMessage = {
+          type: 'system',
+          roomId: roomId,
+          sender: 'Server',
+          text: `${socket.data.nickname} left the room`,
+          ts: new Date().toISOString(),
+        };
+        io.to(roomId).emit('systemMessage', systemMessage);
+        console.log(`Sent leave message to room: ${roomId}`);
+      }
+    }
   });
 });
 
