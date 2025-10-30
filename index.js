@@ -309,7 +309,7 @@ app.get('/', (req, res) => {
                 .create-room-form input { flex-grow: 1; padding: 10px; border: 1px solid #ddd; }
                 .create-room-form button { padding: 10px 15px; border: none; background-color: #34a853; color: white; cursor: pointer; }
                 #messages { height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background-color: #fafafa; }
-                .message { padding: 8px 12px; border-radius: 18px; margin-bottom: 10px; max-width: 70%; word-wrap: break-word; }
+                .message { padding: 8px 12px; border-radius: 18px; margin-bottom: 10px; max-width: 70%; word-wrap: break-word; white-space: pre-wrap; }
                 .my-message { background-color: #4a90e2; color: white; align-self: flex-end; text-align: right; }
                 .other-message { background-color: #e9e9eb; color: #333; align-self: flex-start; text-align: left; }
                 .system-message { color: #888; font-style: italic; text-align: center; width: 100%; }
@@ -471,7 +471,7 @@ app.get('/', (req, res) => {
                         if (success) {
                             currentRoomId = roomId;
                             roomTitle.textContent = roomName;
-                            messagesDiv.innerHTML = ''; // Clear previous messages
+                            // messagesDiv.innerHTML = ''; // This line is removed. History is handled by 'messageHistory' event.
                             switchView('chat');
                         } else {
                             alert(\`Failed to join room: \${message}\`);
