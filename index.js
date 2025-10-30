@@ -291,179 +291,294 @@ io.on('connection', (socket) => {
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
-        <html lang="en">
+        <html lang="ko">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Chat Server Test Client</title>
+            <title>Real-Time Chat</title>
             <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                .container { display: flex; gap: 20px; }
-                .panel { border: 1px solid #ccc; padding: 15px; border-radius: 5px; }
-                #api-panel { flex: 1; }
-                #chat-panel { flex: 2; }
-                #log { white-space: pre-wrap; word-wrap: break-word; }
-                .log-entry { border-bottom: 1px solid #eee; padding: 5px 0; }
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; margin: 0; background-color: #f4f4f8; }
+                .app-container { max-width: 800px; margin: auto; background-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+                .header { padding: 15px; background-color: #4a90e2; color: white; display: flex; justify-content: space-between; align-items: center; }
+                .view { padding: 20px; }
+                #chat-view { display: none; }
+                .room-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+                .room-list-item:hover { background-color: #f9f9f9; }
+                .join-btn { padding: 5px 10px; border: none; background-color: #4a90e2; color: white; cursor: pointer; border-radius: 3px; }
+                .create-room-form { display: flex; gap: 10px; margin-top: 20px; }
+                .create-room-form input { flex-grow: 1; padding: 10px; border: 1px solid #ddd; }
+                .create-room-form button { padding: 10px 15px; border: none; background-color: #34a853; color: white; cursor: pointer; }
+                #messages { height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background-color: #fafafa; }
+                .message { padding: 8px 12px; border-radius: 18px; margin-bottom: 10px; max-width: 70%; word-wrap: break-word; }
+                .my-message { background-color: #4a90e2; color: white; align-self: flex-end; text-align: right; }
+                .other-message { background-color: #e9e9eb; color: #333; align-self: flex-start; text-align: left; }
+                .system-message { color: #888; font-style: italic; text-align: center; width: 100%; }
+                #message-form { display: flex; gap: 10px; }
+                #message-form textarea { flex-grow: 1; padding: 10px; border: 1px solid #ddd; resize: none; }
+                #message-form button { padding: 10px 20px; border: none; background-color: #4a90e2; color: white; cursor: pointer; }
+                #chat-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
             </style>
         </head>
         <body>
-            <h1>Chat Server Test Client</h1>
-            <div class="container">
-                <div id="api-panel" class="panel">
-                    <h2>API Tests</h2>
-                    <div>
-                        <button id="generateNickname">1. Generate Nickname</button>
-                        <p>Nickname: <b id="nickname-display"></b></p>
-                    </div>
-                    <hr>
-                    <div>
-                        <input type="text" id="roomName" placeholder="Room Name">
-                        <button id="createRoom">2. Create Room</button>
-                    </div>
-                    <hr>
-                    <div>
-                        <button id="getRoomList">3. Get Room List</button>
-                        <ul id="room-list"></ul>
+            <div class="app-container">
+                <div class="header">
+                    <div><b id="nickname-display"></b></div>
+                    <div>Connection: <b id="connection-status">Disconnected</b></div>
+                </div>
+
+                <!-- Room List View -->
+                <div id="room-list-view" class="view">
+                    <h2>Available Chat Rooms</h2>
+                    <div id="room-list"></div>
+                    <div class="create-room-form">
+                        <input type="text" id="new-room-name" placeholder="Enter new room name">
+                        <button id="create-room-btn">Create Room</button>
                     </div>
                 </div>
-                <div id="chat-panel" class="panel">
-                    <h2>Chat Area</h2>
-                    <div id="join-area">
-                        <input type="text" id="roomIdToJoin" placeholder="Room ID to Join">
-                        <button id="joinRoom">4. Join Room</button>
+
+                <!-- Chat View -->
+                <div id="chat-view" class="view">
+                    <div id="chat-header">
+                        <h2 id="room-title"></h2>
+                        <button id="leave-room-btn">Leave</button>
                     </div>
-                    <div id="chat-area" style="display: none;">
-                        <h3 id="current-room-display"></h3>
-                        <div id="messages" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;"></div>
-                        <input type="text" id="messageInput" placeholder="Enter message">
-                        <button id="sendMessage">Send</button>
-                        <button id="leaveRoom">Leave Room</button>
-                    </div>
+                    <div id="messages"></div>
+                    <form id="message-form">
+                        <textarea id="message-input" placeholder="Type a message..."></textarea>
+                        <button type="submit">Send</button>
+                    </form>
                 </div>
             </div>
-            <h2>Event Log</h2>
-            <div id="log" class="panel" style="background-color: #f0f0f0;"></div>
 
             <script src="/socket.io/socket.io.js"></script>
             <script>
-                const socket = io();
+                // --- Global State ---
                 let myNickname = '';
-                let myRoomId = '';
                 let mySocketId = '';
+                let currentRoomId = null;
+                let roomListInterval = null;
 
-                const log = document.getElementById('log');
+                // --- DOM Elements ---
                 const nicknameDisplay = document.getElementById('nickname-display');
-                const roomList = document.getElementById('room-list');
+                const connectionStatus = document.getElementById('connection-status');
+                const roomListView = document.getElementById('room-list-view');
+                const chatView = document.getElementById('chat-view');
+                const roomListDiv = document.getElementById('room-list');
+                const createRoomBtn = document.getElementById('create-room-btn');
+                const newRoomNameInput = document.getElementById('new-room-name');
+                const roomTitle = document.getElementById('room-title');
+                const messagesDiv = document.getElementById('messages');
+                const messageForm = document.getElementById('message-form');
+                const messageInput = document.getElementById('message-input');
+                const leaveRoomBtn = document.getElementById('leave-room-btn');
 
-                // --- Helper ---
-                function logEvent(eventName, data) {
-                    const entry = document.createElement('div');
-                    entry.className = 'log-entry';
-                    entry.innerHTML = \`<b>[\${new Date().toLocaleTimeString()}] \${eventName}</b>: \${JSON.stringify(data)}\`;
-                    log.prepend(entry);
+                // --- Socket.IO Client Setup ---
+                const socket = io({
+                    reconnectionAttempts: 2,
+                    reconnectionDelay: 10000
+                });
+
+                // --- Helper Functions ---
+                const api = {
+                    get: (url) => fetch(url).then(res => res.json()),
+                    post: (url, body) => fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    }).then(res => res.json())
+                };
+
+                function switchView(viewName) {
+                    if (viewName === 'chat') {
+                        roomListView.style.display = 'none';
+                        chatView.style.display = 'block';
+                        clearInterval(roomListInterval);
+                    } else {
+                        roomListView.style.display = 'block';
+                        chatView.style.display = 'none';
+                        startRoomListPolling();
+                    }
                 }
 
-                // --- Socket.IO Listeners ---
+                function addMessageToUI(msg) {
+                    const msgElement = document.createElement('div');
+                    msgElement.classList.add('message');
+                    if (msg.type === 'system' || msg.sender === 'System') {
+                        msgElement.classList.add('system-message');
+                        msgElement.textContent = \`[\${new Date(msg.ts).toLocaleTimeString()}] \${msg.text}\`;
+                    } else {
+                        msgElement.classList.add(msg.sender === myNickname ? 'my-message' : 'other-message');
+                        msgElement.innerHTML = \`<b>\${msg.sender}</b><br>\${msg.text}<br><small style="opacity: 0.7;">\${new Date(msg.ts).toLocaleTimeString()}</small>\`;
+                    }
+                    messagesDiv.appendChild(msgElement);
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
+
+                // --- Core Logic Functions ---
+                async function initializeApp() {
+                    try {
+                        const { success, nickname } = await api.get('/api/user/generate-nickname');
+                        if (success) {
+                            myNickname = nickname;
+                            nicknameDisplay.textContent = \`Nickname: \${myNickname}\`;
+                        }
+                    } catch (error) {
+                        console.error('Failed to generate nickname:', error);
+                        nicknameDisplay.textContent = 'Could not get nickname';
+                    }
+                    switchView('list');
+                }
+
+                async function updateRoomList() {
+                    try {
+                        const { success, rooms } = await api.get('/api/room/list');
+                        if (success) {
+                            roomListDiv.innerHTML = '';
+                            if (rooms.length === 0) {
+                                roomListDiv.innerHTML = '<p>No rooms available. Create one!</p>';
+                            } else {
+                                rooms.forEach(room => {
+                                    const roomItem = document.createElement('div');
+                                    roomItem.className = 'room-list-item';
+                                    roomItem.innerHTML = \`
+                                        <div>
+                                            <b>\${room.name}</b> (ID: \${room.roomId})
+                                            <br>
+                                            <small>\${room.userCount} user(s)</small>
+                                        </div>
+                                        <button class="join-btn" data-room-id="\${room.roomId}" data-room-name="\${room.name}">Join</button>
+                                    \`;
+                                    roomListDiv.appendChild(roomItem);
+                                });
+                            }
+                        }
+                    } catch(e) {
+                        console.error("Could not update room list", e);
+                        roomListDiv.innerHTML = '<p>Error fetching room list.</p>';
+                    }
+                }
+
+                function startRoomListPolling() {
+                    updateRoomList();
+                    if(roomListInterval) clearInterval(roomListInterval);
+                    roomListInterval = setInterval(updateRoomList, 5000);
+                }
+
+                async function handleJoinRoom(roomId, roomName) {
+                    if (!myNickname || !mySocketId) return alert('Cannot join room: nickname or socket connection not ready.');
+                    try {
+                        const { success, message } = await api.post('/api/room/join', { nickname: myNickname, roomId, socketId: mySocketId });
+                        if (success) {
+                            currentRoomId = roomId;
+                            roomTitle.textContent = roomName;
+                            messagesDiv.innerHTML = ''; // Clear previous messages
+                            switchView('chat');
+                        } else {
+                            alert(\`Failed to join room: \${message}\`);
+                        }
+                    } catch (e) {
+                        alert('Error joining room.');
+                    }
+                }
+
+                // --- Event Handlers ---
+                createRoomBtn.addEventListener('click', async () => {
+                    const roomName = newRoomNameInput.value.trim();
+                    if (!roomName) return alert('Please enter a room name.');
+                    if (!myNickname) return alert('Cannot create room: nickname not generated.');
+
+                    try {
+                        const { success, room } = await api.post('/api/room/create', { roomName, creatorNickname: myNickname });
+                        if (success) {
+                            newRoomNameInput.value = '';
+                            await handleJoinRoom(room.roomId, room.name);
+                        } else {
+                            alert('Failed to create room.');
+                        }
+                    } catch (e) {
+                        alert('Error creating room.');
+                    }
+                });
+
+                roomListDiv.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('join-btn')) {
+                        const roomId = e.target.dataset.roomId;
+                        const roomName = e.target.dataset.roomName;
+                        handleJoinRoom(roomId, roomName);
+                    }
+                });
+
+                leaveRoomBtn.addEventListener('click', async () => {
+                    if (!currentRoomId) return;
+                    try {
+                        await api.post('/api/room/leave', { nickname: myNickname, roomId: currentRoomId, socketId: mySocketId });
+                    } catch(e) {
+                         console.error("Error leaving room:", e);
+                    } finally {
+                        currentRoomId = null;
+                        switchView('list');
+                    }
+                });
+
+                messageForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const message = messageInput.value.trim();
+                    if (message && currentRoomId) {
+                        socket.emit('chatMessage', { roomId: currentRoomId, nickname: myNickname, message });
+                        messageInput.value = '';
+                    }
+                });
+
+                messageInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        messageForm.requestSubmit();
+                    }
+                });
+
+                // --- Socket.IO Event Listeners ---
                 socket.on('connect', () => {
                     mySocketId = socket.id;
-                    logEvent('Socket Connected', { socketId: mySocketId });
+                    connectionStatus.textContent = 'Connected';
+                    connectionStatus.style.color = '#34a853';
                 });
-                socket.on('roomCreated', (data) => logEvent('roomCreated', data));
-                socket.on('roomDeleted', (data) => logEvent('roomDeleted', data));
-                socket.on('messageReceived', (data) => {
-                    logEvent('messageReceived', data);
-                    const msgDiv = document.createElement('div');
-                    msgDiv.textContent = \`[\${new Date(data.ts).toLocaleTimeString()}] \${data.sender}: \${data.text}\`;
-                    document.getElementById('messages').appendChild(msgDiv);
+
+                socket.on('disconnect', () => {
+                    connectionStatus.textContent = 'Disconnected';
+                    connectionStatus.style.color = '#ea4335';
                 });
-                socket.on('messageHistory', (data) => {
-                    logEvent('messageHistory', data);
-                    const messagesDiv = document.getElementById('messages');
+
+                socket.on('reconnect_failed', async () => {
+                    alert('Failed to reconnect to the server. Attempting to rejoin the last room.');
+                    if (currentRoomId) {
+                        try {
+                            // Re-fetch nickname just in case, then rejoin
+                            await initializeApp();
+                            await handleJoinRoom(currentRoomId, roomTitle.textContent);
+                            alert('Successfully rejoined the room.');
+                        } catch (e) {
+                            alert('Could not rejoin the room. Please refresh the page.');
+                            switchView('list');
+                        }
+                    }
+                });
+
+                socket.on('roomCreated', () => {
+                    if(roomListView.style.display !== 'none') updateRoomList();
+                });
+                socket.on('roomDeleted', () => {
+                     if(roomListView.style.display !== 'none') updateRoomList();
+                });
+
+                socket.on('messageHistory', (history) => {
                     messagesDiv.innerHTML = '';
-                    data.forEach(msg => {
-                        const msgDiv = document.createElement('div');
-                        msgDiv.textContent = \`[\${new Date(msg.ts).toLocaleTimeString()}] \${msg.sender}: \${msg.text}\`;
-                        messagesDiv.appendChild(msgDiv);
-                    });
+                    history.forEach(addMessageToUI);
                 });
 
-                // --- API Actions ---
-                document.getElementById('generateNickname').onclick = async () => {
-                    const res = await fetch('/api/user/generate-nickname');
-                    const data = await res.json();
-                    if (data.success) {
-                        myNickname = data.nickname;
-                        nicknameDisplay.textContent = myNickname;
-                        logEvent('API: generate-nickname', data);
-                    }
-                };
+                socket.on('messageReceived', addMessageToUI);
 
-                document.getElementById('createRoom').onclick = async () => {
-                    if (!myNickname) { alert('Please generate a nickname first.'); return; }
-                    const roomName = document.getElementById('roomName').value;
-                    const res = await fetch('/api/room/create', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ roomName, creatorNickname: myNickname })
-                    });
-                    logEvent('API: create-room', await res.json());
-                    document.getElementById('getRoomList').click(); // Refresh list
-                };
-
-                document.getElementById('getRoomList').onclick = async () => {
-                    const res = await fetch('/api/room/list');
-                    const data = await res.json();
-                    logEvent('API: get-room-list', data);
-                    roomList.innerHTML = '';
-                    data.rooms.forEach(room => {
-                        const li = document.createElement('li');
-                        li.textContent = \`\${room.name} (ID: \${room.roomId}) - \${room.userCount} users\`;
-                        roomList.appendChild(li);
-                    });
-                };
-
-                document.getElementById('joinRoom').onclick = async () => {
-                    if (!myNickname || !mySocketId) { alert('Please generate a nickname first.'); return; }
-                    myRoomId = document.getElementById('roomIdToJoin').value;
-                    if (!myRoomId) { alert('Please enter a Room ID.'); return; }
-
-                    const res = await fetch('/api/room/join', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ nickname: myNickname, roomId: myRoomId, socketId: mySocketId })
-                    });
-                    logEvent('API: join-room', await res.json());
-
-                    document.getElementById('join-area').style.display = 'none';
-                    document.getElementById('chat-area').style.display = 'block';
-                    document.getElementById('current-room-display').textContent = \`In Room: \${myRoomId}\`;
-                };
-
-                document.getElementById('sendMessage').onclick = () => {
-                    const message = document.getElementById('messageInput').value;
-                    if (message) {
-                        socket.emit('chatMessage', { roomId: myRoomId, nickname: myNickname, message });
-                        logEvent('Socket Emit: chatMessage', { message });
-                        document.getElementById('messageInput').value = '';
-                    }
-                };
-
-                document.getElementById('leaveRoom').onclick = async () => {
-                    const res = await fetch('/api/room/leave', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ nickname: myNickname, roomId: myRoomId, socketId: mySocketId })
-                    });
-                    logEvent('API: leave-room', await res.json());
-
-                    document.getElementById('join-area').style.display = 'block';
-                    document.getElementById('chat-area').style.display = 'none';
-                    document.getElementById('messages').innerHTML = '';
-                    myRoomId = '';
-                };
-
-                // Initial load
-                document.getElementById('getRoomList').click();
+                // --- Initial Load ---
+                window.onload = initializeApp;
             </script>
         </body>
         </html>
