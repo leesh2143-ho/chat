@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Server - Interactive API Documentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 
+        Chosen Palette: Technical Indigo & Professional Gray
+        Application Structure Plan: A two-column layout. Left column (sidebar) for fixed navigation (User API, Room API, Socket.IO Events). Right column (main content) displays the details for the selected section. Each endpoint is presented as an interactive accordion element. Clicking an endpoint header (showing method and path) expands it to reveal details (parameters, request/response examples). This structure is ideal for API documentation as it allows users to quickly navigate to a specific section, scan all available endpoints, and then drill down into the specific details they need, which is far more user-friendly than scrolling a long, static document.
+        Visualization & Content Choices: 
+        - Report Info: API Endpoint List -> Goal: Organize/Inform -> Presentation: Interactive Accordion (HTML/Tailwind) -> Interaction: Click-to-toggle details -> Justification: Hides complexity by default, allows quick scanning, and provides progressive disclosure of information.
+        - Report Info: HTTP Method (GET/POST/DELETE) -> Goal: Inform (Quick Scan) -> Presentation: Colored Badge (HTML/Tailwind) -> Interaction: None (visual cue) -> Justification: Allows for immediate visual identification of the endpoint's action type.
+        - Report Info: Request/Response JSON -> Goal: Inform (Detail) -> Presentation: Styled <pre> code blocks (HTML/Tailwind) -> Interaction: None -> Justification: Clearly and accurately presents data structures for developers.
+        - Report Info: Section (User, Room) -> Goal: Navigate -> Presentation: Sidebar Links (HTML/Tailwind) -> Interaction: Click-to-scroll/show -> Justification: Provides clear, persistent navigation between the main categories of the API.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        /* Simple transition for accordion content */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .accordion-content.open {
+            max-height: 1000px; /* Adjust as needed */
+            transition: max-height 0.5s ease-in;
+        }
+        .accordion-header .arrow {
+            transition: transform 0.3s ease;
+        }
+        .accordion-header.open .arrow {
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-white border-r border-gray-200 p-6 sticky top-0 h-screen hidden md:block">
+            <h1 class="text-xl font-bold text-indigo-600">Chat Server API</h1>
+            <p class="text-sm text-gray-500 mb-6">Interactive Documentation</p>
+            <nav class="flex flex-col space-y-2">
+                <a href="#user-endpoints" class="nav-link text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg font-medium">User API</a>
+                <a href="#room-management" class="nav-link text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg font-medium">Room Management</a>
+                <a href="#room-interaction" class="nav-link text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg font-medium">Room Interaction</a>
+                <a href="#socket-events" class="nav-link text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg font-medium">Socket.IO Events</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 md:p-10">
+            <div class="max-w-4xl mx-auto">
+                
+                <header class="mb-10">
+                    <h1 class="text-4xl font-bold text-gray-900">API 명세서 (Node.js/Express) - 상세</h1>
+                    <p class="mt-2 text-lg text-gray-600">이 문서는 Node.js Express 서버에서 처리하는 모든 HTTP RESTful API 엔드포인트와 Socket.IO 이벤트를 구체적으로 정의합니다. 각 항목을 클릭하여 세부 정보를 확인하세요.</p>
+                </header>
+
+                <!-- 1. User/Authentication Endpoints -->
+                <section id="user-endpoints" class="mb-12">
+                    <h2 class="text-2xl font-semibold text-gray-900 border-b border-gray-300 pb-2 mb-6">1. User/Authentication Endpoints</h2>
+                    <p class="text-gray-600 mb-6">사용자 인증 및 닉네임 생성과 관련된 API입니다.</p>
+                    
+                    <div class="space-y-4">
+                        <!-- Endpoint: 1.1. 닉네임 자동 생성 (GET) -->
+                        <div class="border border-gray-200 rounded-lg bg-white shadow-sm">
+                            <button class="accordion-header flex justify-between items-center w-full p-4 text-left">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs font-semibold text-white bg-green-500 rounded-md px-2 py-1">GET</span>
+                                    <span class="font-medium text-gray-800">/api/user/generate-nickname</span>
+                                </div>
+                                <span class="arrow text-indigo-500 text-xl font-bold">►</span>
+                            </button>
+                            <div class="accordion-content">
+                                <div class="p-5 border-t border-gray-200 bg-gray-50">
+                                    <p class="text-sm text-gray-600 mb-4">서버에서 중복되지 않는 고유한 익명 닉네임을 생성하여 반환합니다.</p>
+                                    <h4 class="font-semibold mb-2">요청 본문 (Request Body)</h4>
+                                    <p class="text-sm text-gray-500 mb-4">없음</p>
+
+                                    <h4 class="font-semibold mb-2">200 OK - 성공 응답 (Success Response)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono">
+<pre>{
+  "success": true,
+  "nickname": "user-7541"
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Room Management Endpoints -->
+                <section id="room-management" class="mb-12">
+                    <h2 class="text-2xl font-semibold text-gray-900 border-b border-gray-300 pb-2 mb-6">2. Room Management Endpoints</h2>
+                    <p class="text-gray-600 mb-6">채팅방을 생성, 조회, 삭제하는 API입니다.</p>
+                    
+                    <div class="space-y-4">
+                        <!-- Endpoint: 2.1. Room 목록 조회 (GET) -->
+                        <div class="border border-gray-200 rounded-lg bg-white shadow-sm">
+                            <button class="accordion-header flex justify-between items-center w-full p-4 text-left">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs font-semibold text-white bg-green-500 rounded-md px-2 py-1">GET</span>
+                                    <span class="font-medium text-gray-800">/api/room/list</span>
+                                </div>
+                                <span class="arrow text-indigo-500 text-xl font-bold">►</span>
+                            </button>
+                            <div class="accordion-content">
+                                <div class="p-5 border-t border-gray-200 bg-gray-50">
+                                    <p class="text-sm text-gray-600 mb-4">현재 서버에서 활성화된 모든 채팅방의 목록과 참여자 수를 반환합니다.</p>
+                                    <h4 class="font-semibold mb-2">200 OK - 성공 응답 (Success Response)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono">
+<pre>{
+  "success": true,
+  "rooms": [
+    {
+      "roomId": "room-1234",
+      "name": "General Chat",
+      "userCount": 5
+    },
+    {
+      "roomId": "room-5678",
+      "name": "Dev Talk",
+      "userCount": 2
+    }
+  ]
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Endpoint: 2.2. Room 생성 (POST) -->
+                        <div class="border border-gray-200 rounded-lg bg-white shadow-sm">
+                            <button class="accordion-header flex justify-between items-center w-full p-4 text-left">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs font-semibold text-white bg-blue-500 rounded-md px-2 py-1">POST</span>
+                                    <span class="font-medium text-gray-800">/api/room/create</span>
+                                </div>
+                                <span class="arrow text-indigo-500 text-xl font-bold">►</span>
+                            </button>
+                            <div class="accordion-content">
+                                <div class="p-5 border-t border-gray-200 bg-gray-50">
+                                    <p class="text-sm text-gray-600 mb-4">새로운 채팅방을 생성합니다. 생성 시 고유한 `roomId`가 발급됩니다.</p>
+                                    <h4 class="font-semibold mb-2">요청 본문 (Request Body)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono mb-4">
+<pre>{
+  "roomName": "string (Required)",
+  "creatorNickname": "string (Required)"
+}</pre>
+                                    </div>
+
+                                    <h4 class="font-semibold mb-2">201 Created - 성공 응답 (Success Response)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono mb-4">
+<pre>{
+  "success": true,
+  "room": {
+    "roomId": "room-generated-uuid"
+  }
+}</pre>
+                                    </div>
+                                    
+                                    <h4 class="font-semibold mb-2">400 Bad Request - 실패 응답 (Error Response)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono">
+<pre>{
+  "success": false,
+  "message": "필수 필드 누락 오류 메시지"
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Endpoint: 2.3. Room 삭제 (DELETE) -->
+                        <div class="border border-gray-200 rounded-lg bg-white shadow-sm">
+                            <button class="accordion-header flex justify-between items-center w-full p-4 text-left">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs font-semibold text-white bg-red-500 rounded-md px-2 py-1">DELETE</span>
+                                    <span class="font-medium text-gray-800">/api/room/delete/:roomId</span>
+                                </div>
+                                <span class="arrow text-indigo-500 text-xl font-bold">►</span>
+                            </button>
+                            <div class="accordion-content">
+                                <div class="p-5 border-t border-gray-200 bg-gray-50">
+                                    <p class="text-sm text-gray-600 mb-4">경로 파라미터로 전달된 `roomId`에 해당하는 채팅방을 삭제합니다.</p>
+                                    <h4 class="font-semibold mb-2">200 OK - 성공 응답 (Success Response)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono mb-4">
+<pre>{
+  "success": true,
+  "message": "Room deleted successfully."
+}</pre>
+                                    </div>
+                                    
+                                    <h4 class="font-semibold mb-2">404 Not Found - 실패 응답 (Error Response)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono">
+<pre>{
+  "success": false,
+  "message": "Room을 찾을 수 없는 경우"
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 3. Room Interaction Endpoints -->
+                <section id="room-interaction" class="mb-12">
+                    <h2 class="text-2xl font-semibold text-gray-900 border-b border-gray-300 pb-2 mb-6">3. Room Interaction Endpoints</h2>
+                    <p class="text-gray-600 mb-6">채팅방에 입장하거나 퇴장하는 API입니다.</p>
+                    
+                    <div class="space-y-4">
+                        <!-- Endpoint: 3.1. Room 입장 (POST) -->
+                        <div class="border border-gray-200 rounded-lg bg-white shadow-sm">
+                            <button class="accordion-header flex justify-between items-center w-full p-4 text-left">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs font-semibold text-white bg-blue-500 rounded-md px-2 py-1">POST</span>
+                                    <span class="font-medium text-gray-800">/api/room/join</span>
+                                </div>
+                                <span class="arrow text-indigo-500 text-xl font-bold">►</span>
+                            </button>
+                            <div class="accordion-content">
+                                <div class="p-5 border-t border-gray-200 bg-gray-50">
+                                    <p class="text-sm text-gray-600 mb-4">특정 채팅방에 입장합니다. `socketId`는 클라이언트가 Socket.IO 연결 시 부여받는 고유 ID입니다.<br><strong class="text-red-600">로직:</strong> RoomID가 존재하지 않으면 자동으로 Room을 생성한 후 입장 처리됩니다.</p>
+                                    <h4 class="font-semibold mb-2">요청 본문 (Request Body)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono mb-4">
+<pre>{
+  "nickname": "string (Required)",
+  "roomId": "string (Required)",
+  "socketId": "string (Required)"
+}</pre>
+                                    </div>
+
+                                    <h4 class="font-semibold mb-2">200 OK - 성공 응답 (Success Response)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono mb-4">
+<pre>{
+  "success": true,
+  "message": "Joined room successfully."
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Endpoint: 3.2. Room 퇴장 (POST) -->
+                        <div class="border border-gray-200 rounded-lg bg-white shadow-sm">
+                            <button class="accordion-header flex justify-between items-center w-full p-4 text-left">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs font-semibold text-white bg-blue-500 rounded-md px-2 py-1">POST</span>
+                                    <span class="font-medium text-gray-800">/api/room/leave</span>
+                                </div>
+                                <span class="arrow text-indigo-500 text-xl font-bold">►</span>
+                            </button>
+                            <div class="accordion-content">
+                                <div class="p-5 border-t border-gray-200 bg-gray-50">
+                                    <p class="text-sm text-gray-600 mb-4">특정 채팅방에서 퇴장합니다.<br><strong class="text-red-600">로직:</strong> 퇴장 처리 후, Room에 남은 사용자가 0명이면 해당 Room은 자동으로 삭제됩니다.</p>
+                                    <h4 class="font-semibold mb-2">요청 본문 (Request Body)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono mb-4">
+<pre>{
+  "nickname": "string (Required)",
+  "roomId": "string (Required)",
+  "socketId": "string (Required)"
+}</pre>
+                                    </div>
+
+                                    <h4 class="font-semibold mb-2">200 OK - 성공 응답 (Success Response)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono mb-4">
+<pre>{
+  "success": true,
+  "message": "Left room successfully."
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. Socket.IO 이벤트 명세 -->
+                <section id="socket-events" class="mb-12">
+                    <h2 class="text-2xl font-semibold text-gray-900 border-b border-gray-300 pb-2 mb-6">4. Socket.IO 이벤트 명세</h2>
+                    <p class="text-gray-600 mb-6">실시간 통신을 위한 Socket.IO 이벤트 목록입니다.</p>
+
+                    <!-- 4.1. Client -> Server (Emit) -->
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">4.1. Client → Server (Emit)</h3>
+                    <div class="space-y-4 mb-8">
+                        <div class="border border-gray-200 rounded-lg bg-white shadow-sm">
+                            <button class="accordion-header flex justify-between items-center w-full p-4 text-left">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs font-semibold text-white bg-purple-500 rounded-md px-2 py-1">EMIT</span>
+                                    <span class="font-medium text-gray-800">chatMessage</span>
+                                </div>
+                                <span class="arrow text-indigo-500 text-xl font-bold">►</span>
+                            </button>
+                            <div class="accordion-content">
+                                <div class="p-5 border-t border-gray-200 bg-gray-50">
+                                    <p class="text-sm text-gray-600 mb-4">현재 Room에 채팅 메시지를 전송합니다.</p>
+                                    <h4 class="font-semibold mb-2">Payload (Data)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono mb-4">
+<pre>{
+  "roomId": "string",
+  "nickname": "string",
+  "message": "string"
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4.2. Server -> Client (On) -->
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">4.2. Server → Client (On)</h3>
+                    <div class="space-y-4">
+                        <!-- Event: messageReceived -->
+                        <div class="border border-gray-200 rounded-lg bg-white shadow-sm">
+                            <button class="accordion-header flex justify-between items-center w-full p-4 text-left">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs font-semibold text-white bg-gray-500 rounded-md px-2 py-1">ON</span>
+                                    <span class="font-medium text-gray-800">messageReceived</span>
+                                </div>
+                                <span class="arrow text-indigo-500 text-xl font-bold">►</span>
+                            </button>
+                            <div class="accordion-content">
+                                <div class="p-5 border-t border-gray-200 bg-gray-50">
+                                    <p class="text-sm text-gray-600 mb-4">새로운 채팅 또는 시스템 메시지(입장/퇴장)를 수신합니다.</p>
+                                    <h4 class="font-semibold mb-2">Payload (Message Object)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono mb-4">
+<pre>{
+  "type": "string ('chat' | 'system')",
+  "roomId": "string",
+  "sender": "string (e.g., 'user-7541' or 'System')",
+  "text": "string (e.g., '안녕하세요!' or 'user-7541님이 입장하셨습니다.')",
+  "ts": "string (ISO8601 Timestamp)"
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Event: messageHistory -->
+                        <div class="border border-gray-200 rounded-lg bg-white shadow-sm">
+                            <button class="accordion-header flex justify-between items-center w-full p-4 text-left">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs font-semibold text-white bg-gray-500 rounded-md px-2 py-1">ON</span>
+                                    <span class="font-medium text-gray-800">messageHistory</span>
+                                </div>
+                                <span class="arrow text-indigo-500 text-xl font-bold">►</span>
+                            </button>
+                            <div class="accordion-content">
+                                <div class="p-5 border-t border-gray-200 bg-gray-50">
+                                    <p class="text-sm text-gray-600 mb-4">`/api/room/join` 성공 직후, 해당 클라이언트에게만 최근 50개의 대화 기록을 전송합니다.</p>
+                                    <h4 class="font-semibold mb-2">Payload (Data)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono mb-4">
+<pre>[
+  { "type": "chat", "sender": "user-1234", "text": "...", "ts": "..." },
+  { "type": "system", "sender": "System", "text": "...", "ts": "..." },
+  ...
+]</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Event: roomCreated -->
+                        <div class="border border-gray-200 rounded-lg bg-white shadow-sm">
+                            <button class="accordion-header flex justify-between items-center w-full p-4 text-left">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs font-semibold text-white bg-gray-500 rounded-md px-2 py-1">ON</span>
+                                    <span class="font-medium text-gray-800">roomCreated</span>
+                                </div>
+                                <span class="arrow text-indigo-500 text-xl font-bold">►</span>
+                            </button>
+                            <div class="accordion-content">
+                                <div class="p-5 border-t border-gray-200 bg-gray-50">
+                                    <p class="text-sm text-gray-600 mb-4">서버에 새로운 Room이 생성되었음을 모든 클라이언트에게 전파합니다. (Room 목록 갱신용)</p>
+                                    <h4 class="font-semibold mb-2">Payload (Data)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono mb-4">
+<pre>{
+  "roomId": "string",
+  "name": "string",
+  "userCount": 0
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Event: roomDeleted -->
+                        <div class="border border-gray-200 rounded-lg bg-white shadow-sm">
+                            <button class="accordion-header flex justify-between items-center w-full p-4 text-left">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs font-semibold text-white bg-gray-500 rounded-md px-2 py-1">ON</span>
+                                    <span class="font-medium text-gray-800">roomDeleted</span>
+                                </div>
+                                <span class="arrow text-indigo-500 text-xl font-bold">►</span>
+                            </button>
+                            <div class="accordion-content">
+                                <div class="p-5 border-t border-gray-200 bg-gray-50">
+                                    <p class="text-sm text-gray-600 mb-4">Room이 삭제되었음을 모든 클라이언트에게 전파합니다. (Room 목록 갱신용)</p>
+                                    <h4 class="font-semibold mb-2">Payload (Data)</h4>
+                                    <div class="overflow-x-auto rounded-md bg-gray-900 text-white p-4 text-sm font-mono mb-4">
+<pre>{
+  "roomId": "string"
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    // Toggle the 'open' class on the header
+                    header.classList.toggle('open');
+                    
+                    // Get the content panel
+                    const content = header.nextElementSibling;
+                    
+                    // Toggle the 'open' class on the content
+                    content.classList.toggle('open');
+                });
+            });
+
+            // Optional: Smooth scroll for sidebar links
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = e.currentTarget.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
