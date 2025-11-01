@@ -1,25 +1,14 @@
 {
-  "name": "app",
+  "name": "realtime-chat-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "A real-time chat server supporting multiple rooms.",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/leesh2143-ho/chat.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/leesh2143-ho/chat/issues"
-  },
-  "homepage": "https://github.com/leesh2143-ho/chat#readme",
   "dependencies": {
-    "express": "^5.1.0",
-    "socket.io": "^4.8.1"
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
   }
 }
